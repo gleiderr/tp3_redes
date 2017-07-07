@@ -10,12 +10,13 @@
 #include <errno.h>
 
 #define MAX_BUFF 512
-#define MAX_MSG 512
+#define MAX_MSG 202
 #define TIMEOUT_SEC 4
 #define TIMEOUT_uSEC 0
 
 #define CLIREQ 1
 #define QUERY 2
+#define RESPONSE 3
 
 typedef struct {
     struct in_addr sin_addr; //Utilizar inet_network() atribuindo o retorno para sin_addr.s_addr
@@ -89,6 +90,10 @@ int main(int argc, char const *argv[]) {
                 msg.port = sin.sin_port; //Não utilizo htons, pois à priori já chegou formatado
                 msg.seq = htonl(rand());
                 //msg.msg; não atribuido porque será enviada assim como recebida
+
+                insertInMemory(&msg);
+
+                //Encaminhar para vizinhança
                 for(i = 0; i < vizinhanca.count; i++) {
                     sin.sin_addr = vizinhanca.vizinhos[i].sin_addr;
                     sin.sin_port = vizinhanca.vizinhos[i].port;
@@ -96,10 +101,23 @@ int main(int argc, char const *argv[]) {
                         die("error: sendto");
                 }
 
-                //procurar a chave no dicionário local e responder ao cliente se a chave encontrada
-
+                //procurar a chave no dicionário local e responder ao cliente se chave encontrada
+                if(inDictionary(msg.msg)) {
+                    //Responder diretamente ao client
+                }
                 break;
             case QUERY:
+                if(!inMemory(&msg)){
+                    insertInMemory(&msg);
+                    //procurar a chave no dicionário local e responder ao cliente se chave encontrada
+
+                    msg.ttl = ntohs(msg.ttl) - 1; //Decrementando no byte-order do host
+                    if(msg.ttl > 0) {
+                        msg.ttl = htons(msg.ttl); //Retornando para o byte-order da network
+                        
+                        //Encaminhar para vizinhança exceto para aquele do qual a mensagem foi recebida
+                    }
+                }
                 break;
             default:
                 die("error: switch");
