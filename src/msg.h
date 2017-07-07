@@ -24,7 +24,7 @@ typedef struct {
 
 typedef struct {
     uint16_t type;
-    char chave_valor[MAX_CHAVE + MAX_VALOR];
+    char chave_valor[MAX_CHAVE + MAX_VALOR]; // =202, por causa do \t e do \0
 } Msg_response;
 
 #define Msg_generica Msg_query
