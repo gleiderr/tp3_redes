@@ -9,55 +9,32 @@
 #include <netdb.h>
 #include <errno.h>
 
+#include "msg.h"
+#include "dictionary.h"
+#include "neighborhood.h"
+
 #define MAX_BUFF 512
-#define MAX_MSG 512
 #define TIMEOUT_SEC 4
 #define TIMEOUT_uSEC 0
-
-#define CLIREQ 1
-#define QUERY 2
-
-typedef struct {
-    struct in_addr sin_addr; //Utilizar inet_network() atribuindo o retorno para sin_addr.s_addr
-    uint16_t port;
-} Vizinho;
-
-typedef struct {
-    int count;
-    Vizinhança vizinhos[256];
-} Vizinhanca;
-
-typedef struct {
-    uint16_t type;
-    uint16_t ttl;
-    struct in_addr sin_addr;
-    uint16_t port;
-    uint32_t seq;
-    char msg[MAX_MSG];
-} serventMsg;
 
 void die(char *s) {
     perror(s);
     exit(EXIT_FAILURE);
 }
 
-int main(int argc, char const *argv[]) {
-    int i;
-    int s; //Descritor do Socket 
+int openSocket(char* port) {
+    int s; //Descritor do Socket
     struct sockaddr_in sin;
-    socklen_t sin_len = sizeof(sockaddr_in);
-    Vizinhanca vizinhanca;
 
-    if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
         die("error: socket");
-    }
 
-    int port = atoi(argv[1]); //Lendo e convertendo o Porto de Escuta
-    bzero((char*) &sin, sizeof(struct sockaddr_in));
+    uint16_t port = atoi(port); //Lendo e convertendo o Porto de Escuta
+    bzero((char*) &sin, sizeof(sockaddr_in));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
     sin.sin_port = htons(port);
-    if(bind(s, (struct sockaddr*) &sin, sin_len) < 0) {
+    if(bind(s, (struct sockaddr*) &sin, sizeof(sockaddr_in)) < 0) {
         close(s);
         die("error: bind");
     }
@@ -68,38 +45,75 @@ int main(int argc, char const *argv[]) {
     time_str.tv_usec = TIMEOUT_uSEC;
     setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &time_str, sizeof(time_str));
 
-    //Leitura do arquivo
-    //Não implementada
-    /*char buff[MAX_BUFF];
-    while(!feof(stdin)) {
-        fgets(buff, MAX_BUFF, stdin);
-    }*/
+    return s;
+}
 
-    serventMsg msg;
-    srand(port); //Porto como Semente, considerando que cada programa operará em um porto diferente
+int main(int argc, char const *argv[]) {
+    int i;
+    uint32_t seq = 0;
+    struct sockaddr_in sin;
+    socklen_t sin_len = 0;
+    Neighborhood neighborhood;
+
+    buildDictionary(argv[2]);
+    buildNeighborhood(argv, 3, argc, &neighborhood);
+
+    int s = openSocket(argv[1]); //Descritor do Socket
+    
+    //Estruturas 
+    Msg_generica msg_generica;
+    Msg_query msg_query;
+    Msg_clireq* msg_clireq;
+
     while(1) {
-        if (recv(s, &msg, sizeof(serventMsg), 0, &sin, &sin_len) < 0)
+
+        if (recvfrom(s, &msg_generica, sizeof(msg_generica), 0, &sin, &sin_len) < 0)
             die("error: recvfrom");
 
-        switch(ntohs(msg.type)) {
+        switch(ntohs(msg_generica.type)) {
             case CLIREQ:
-                msg.type = htons(QUERY);
-                msg.ttl = htons(3);
-                msg.sin_addr = sin.sin_addr; //Não utilizo htons, pois à priori já chegou formatado
-                msg.port = sin.sin_port; //Não utilizo htons, pois à priori já chegou formatado
-                msg.seq = htonl(rand());
-                //msg.msg; não atribuido porque será enviada assim como recebida
-                for(i = 0; i < vizinhanca.count; i++) {
-                    sin.sin_addr = vizinhanca.vizinhos[i].sin_addr;
-                    sin.sin_port = vizinhanca.vizinhos[i].port;
-                    if (sendto(s, &msg, sizeof(serventMsg), 0, (struct sockaddr*) &sin, slen) < 0)
+                msg_clireq = (Msg_clireq*) &msg_generica;
+
+                msg_query.type = htons(QUERY);
+                msg_query.ttl = htons(3);
+                msg_query.sin_addr = sin.sin_addr; //Não uso htons. À priori já chegou formatado
+                msg_query.port = sin.sin_port; //Não uso htons. À priori já chegou formatado
+                msg_query.seq = seq++;
+                strcpy(msg_query.chave, msg_clireq->chave);
+
+                insertQueryMemory(&msg_query);
+
+                //Encaminhar para vizinhança
+                dispatch(&msg_query, &neighborhood, NULL);
+                /*for(i = 0; i < neighborhood.count; i++) {
+                    sin.sin_addr = neighborhood.vizinhos[i].sin_addr;
+                    sin.sin_port = neighborhood.vizinhos[i].port;
+                    if (sendto(s, &msg_query, sizeof(Msg_query), 0, (struct sockaddr*) &sin, slen) < 0)
                         die("error: sendto");
+                }*/
+
+                if(inDictionary(msg_query.chave)) {
+                    //Responder diretamente ao client
                 }
-
-                //procurar a chave no dicionário local e responder ao cliente se a chave encontrada
-
                 break;
             case QUERY:
+                if(!inQueryMemory(&msg_generica)){
+                    insertQueryMemory(&msg_generica);
+
+                    if(inDictionary(msg_generica.chave)) {
+                        //Responder diretamente ao client
+                    }
+
+                    //Decrementando no byte-order do host
+                    msg_generica.ttl = ntohs(msg_generica.ttl) - 1; 
+                    if(msg_query.ttl > 0) {
+                        //Retornando para o byte-order da network
+                        msg_query.ttl = htons(msg_query.ttl);
+                        
+                        //Encaminhar para vizinhança exceto para nó do qual a mensagem foi recebida
+                        dispatch(&msg_query, &neighborhood, &sin);
+                    }
+                }
                 break;
             default:
                 die("error: switch");
