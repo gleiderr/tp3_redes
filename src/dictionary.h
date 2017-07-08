@@ -1,6 +1,8 @@
 #ifndef DICTIONARY_H
 #define DICTIONARY_H
 
-void buildDictionary(char* fname);
+void buildDictionary(char* const fname);
+
+char* inDictionary(char* const chave);
 
 #endif
