@@ -6,8 +6,21 @@ typedef struct node {
     struct node* prox;
 } Pilha;
 
+typedef Pilha Celula;
+
+/* Cria cabeça da pilha */
 Pilha* novaPilha();
+
+/* Remove todas as células da pilha. Não se importa com objetos. */
 void limpaPilha(Pilha* pilha);
-Pilha* proxPilha(Pilha* pilha);
+
+/* Retorna próximo objeto apontado pela célula da pilha. */
+Celula* proxPilha(Celula* const celula);
+
+/* Insere objeto na pilha. Alocação do objeto é responsabilidade do usuário da pilha. */
+void inserePilha(Pilha* pilha, void* obj);
+
+/* Retorna objeto armazenado na célula. */
+void* objPilha(Celula* celula)
 
 #endif
