@@ -22,28 +22,28 @@ void die(char *s) {
     exit(EXIT_FAILURE);
 }
 
-int openSocket(char* port) {
+int openSocket(char* porto) {
     int s; //Descritor do Socket
     struct sockaddr_in sin;
 
     if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
         die("error: socket");
 
-    uint16_t port = atoi(port); //Lendo e convertendo o Porto de Escuta
-    bzero((char*) &sin, sizeof(sockaddr_in));
+    uint16_t port = atoi(porto); //Lendo e convertendo o Porto de Escuta
+    bzero((char*) &sin, sizeof(struct sockaddr_in));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
     sin.sin_port = htons(port);
-    if(bind(s, (struct sockaddr*) &sin, sizeof(sockaddr_in)) < 0) {
+    if(bind(s, (struct sockaddr*) &sin, sizeof(struct sockaddr_in)) < 0) {
         close(s);
         die("error: bind");
     }
 
     //Configurando timeout
-    struct timeval time_str;
+    /*struct timeval time_str;
     time_str.tv_sec = TIMEOUT_SEC;
     time_str.tv_usec = TIMEOUT_uSEC;
-    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &time_str, sizeof(time_str));
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &time_str, sizeof(time_str));*/
 
     return s;
 }
@@ -85,12 +85,6 @@ int main(int argc, char const *argv[]) {
 
                 //Encaminhar para vizinhança
                 dispatch(&msg_query, &neighborhood, NULL);
-                /*for(i = 0; i < neighborhood.count; i++) {
-                    sin.sin_addr = neighborhood.vizinhos[i].sin_addr;
-                    sin.sin_port = neighborhood.vizinhos[i].port;
-                    if (sendto(s, &msg_query, sizeof(Msg_query), 0, (struct sockaddr*) &sin, slen) < 0)
-                        die("error: sendto");
-                }*/
 
                 if(inDictionary(msg_query.chave)) {
                     //Responder diretamente ao client
@@ -120,5 +114,6 @@ int main(int argc, char const *argv[]) {
         }
     }
 
+    destroyDictionary();
     exit(EXIT_SUCCESS);
 }

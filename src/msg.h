@@ -1,6 +1,9 @@
 #ifndef MSG_H
 #define MSG_H
 
+#include <netinet/in.h>
+#include <stdint.h>
+
 #define CLIREQ 1
 #define QUERY 2
 #define RESPONSE 3

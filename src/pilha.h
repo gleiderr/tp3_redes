@@ -21,6 +21,9 @@ Celula* proxPilha(Celula* const celula);
 void inserePilha(Pilha* pilha, void* obj);
 
 /* Retorna objeto armazenado na célula. */
-void* objPilha(Celula* celula)
+void* objPilha(Celula* celula);
+
+/* Atribui objeto à celula da pilha*/
+void setObj(Celula* celula, void* obj);
 
 #endif
