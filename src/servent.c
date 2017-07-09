@@ -56,7 +56,7 @@ int main(int argc, char const *argv[]) {
     Neighborhood neighborhood;
 
     buildDictionary(argv[2]);
-    /*buildNeighborhood(argv, 3, argc, &neighborhood);
+    buildNeighborhood(argv, 3, argc, &neighborhood);
 
     int s = openSocket(argv[1]); //Descritor do Socket
     
@@ -112,7 +112,7 @@ int main(int argc, char const *argv[]) {
             default:
                 die("error: switch");
         }
-    }*/
+    }
 
     destroyDictionary();
     exit(EXIT_SUCCESS);
