@@ -40,10 +40,10 @@ int openSocket(char* port) {
     }
 
     //Configurando timeout
-    struct timeval time_str;
+    /*struct timeval time_str;
     time_str.tv_sec = TIMEOUT_SEC;
     time_str.tv_usec = TIMEOUT_uSEC;
-    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &time_str, sizeof(time_str));
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &time_str, sizeof(time_str));*/
 
     return s;
 }

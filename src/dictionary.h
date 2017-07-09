@@ -5,4 +5,6 @@ void buildDictionary(char* const fname);
 
 char* inDictionary(char* const chave);
 
+void destroyDictionary();
+
 #endif

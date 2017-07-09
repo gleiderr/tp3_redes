@@ -45,4 +45,18 @@ void buildDictionary(char* const fname) {
     fclose(f);
 }
 
-char* inDictionary(char* const chave);
+char* inDictionary(char* const chave) {
+    Celula* aux = dicionario;
+    while(aux = proxPilha(aux) != NULL)
+        if(strcmp(objPilha(aux)->chave, chave) == 0)
+            return objPilha(aux)->valor;
+    return NULL;
+}
+
+void destroyDictionary() {
+    Celula* aux = dicionario;
+    while(aux = proxPilha(aux) != NULL)
+        free(objPilha(aux));
+
+    limpaPilha(dicionario);
+}
