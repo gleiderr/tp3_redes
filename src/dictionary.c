@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "dictionary.h"
-#include "pilha.h"
 #include "msg.h"
 
 #define MAX_BUFF 1024
@@ -14,8 +14,22 @@ typedef struct {
 
 Pilha* dicionario;
 
-void buildDictionary(char* const fname) {
+/* Remove brancos finais e iniciais */
+void strip(char* s) {
     int i;
+    char* aux = s;
+    
+    //Ignorando espaços em branco iniciais    
+    while(aux[0] == ' ' || aux[0] == '\t') aux = &aux[1];
+
+    //Ignorando brancos finais
+    for(i = strlen(aux) - 1; i >= 0 && (aux[i] == ' ' || aux[i] == '\t'); i--)
+        aux[i] = '\0';
+
+    strcpy(s, aux);
+}
+
+void buildDictionary(char const* fname) {
     dicionario = novaPilha();
     FILE* f = fopen(fname, "r");
     char buff[MAX_BUFF];
@@ -23,40 +37,47 @@ void buildDictionary(char* const fname) {
     while(!feof(f)) {
         fgets(buff, MAX_BUFF, f);
 
-        //Ignorando espaços em branco iniciais
-        char* aux = buff;
-        while(aux[0] == ' ') aux = &aux[1];
+        strip(buff);
 
-        if(aux[0] != '#') { //Se linha não for comentário:
+        if(buff[0] != '#') { //Se linha não for comentário:
             Par* par = (Par*) malloc(sizeof(Par));
-            sscanf(aux, "%s%[^\f\n]", par->chave, par->valor);
+            sscanf(buff, "%s%[^\f\n]", par->chave, par->valor);
 
-            //Removendo brancos finais
-            i = strlen(par->valor) - 1;
-            while(i > 0  && par->valor[i] == ' ') {
-                par->valor[i] = '\0';
-                i--;
+            strip(par->valor);
+
+            Celula* aux;
+            if((aux = inDictionary(par->chave)) != NULL){
+                //Chaves repetidas
+                free(objPilha(aux));
+                setObj(aux, par);
+            } else if(strlen(par->chave) > 0 || strlen(par->valor) > 0) {
+                //somente valores/chaves não vazios
+                inserePilha(dicionario, par);
             }
-
-            inserePilha(dicionario, par);
         } //else ignora e passa para próxima linha
     }
 
     fclose(f);
 }
 
-char* inDictionary(char* const chave) {
+Celula* inDictionary(char const* chave) {
     Celula* aux = dicionario;
-    while(aux = proxPilha(aux) != NULL)
-        if(strcmp(objPilha(aux)->chave, chave) == 0)
-            return objPilha(aux)->valor;
+    while((aux = proxPilha(aux)) != NULL){
+        Par* par = (Par*) objPilha(aux); 
+        if(strcmp(par->chave, chave) == 0)
+            return aux;
+    }
     return NULL;
 }
 
 void destroyDictionary() {
     Celula* aux = dicionario;
-    while(aux = proxPilha(aux) != NULL)
+    puts("destroyDictionary");
+    while((aux = proxPilha(aux)) != NULL){
+        Par* par = (Par*) objPilha(aux);
+        printf("<%s><%s>\n", par->chave, par->valor);
         free(objPilha(aux));
+    }
 
     limpaPilha(dicionario);
 }

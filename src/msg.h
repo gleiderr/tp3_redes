@@ -1,6 +1,9 @@
 #ifndef MSG_H
 #define MSG_H
 
+#include <netinet/in.h>
+#include <stdint.h>
+
 #define CLIREQ 1
 #define QUERY 2
 #define RESPONSE 3
@@ -33,6 +36,6 @@ typedef struct {
 int inQueryMemory(Msg_query* msg);
 
 /* Insere determinada query na memória */
-void insertQueryMemory(&msg);
+void insertQueryMemory(Msg_query* msg);
 
 #endif

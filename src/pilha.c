@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "pilha.h"
 
 Pilha* novaPilha() {
@@ -18,11 +20,15 @@ void limpaPilha(Pilha* pilha) {
 }
 
 Celula* proxPilha(Celula* const celula) {
-    return pilha->prox;
+    return celula->prox;
 }
 
 void* objPilha(Celula* celula) {
     return celula->obj;
+}
+
+void setObj(Celula* celula, void* obj) {
+    celula->obj = obj;
 }
 
 void inserePilha(Pilha* pilha, void* obj) {
