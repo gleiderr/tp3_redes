@@ -72,10 +72,10 @@ Celula* inDictionary(char const* chave) {
 
 void destroyDictionary() {
     Celula* aux = dicionario;
-    puts("destroyDictionary");
+    //puts("destroyDictionary");
     while((aux = proxPilha(aux)) != NULL){
-        Par* par = (Par*) objPilha(aux);
-        printf("<%s><%s>\n", par->chave, par->valor);
+        /*Par* par = (Par*) objPilha(aux);
+        printf("<%s><%s>\n", par->chave, par->valor);*/
         free(objPilha(aux));
     }
 
