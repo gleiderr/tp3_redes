@@ -33,6 +33,6 @@ typedef struct {
 int inQueryMemory(Msg_query* msg);
 
 /* Insere determinada query na memória */
-void insertQueryMemory(&msg);
+void insertQueryMemory(Msg_query* msg);
 
 #endif
