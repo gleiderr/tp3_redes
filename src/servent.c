@@ -76,6 +76,7 @@ int main(int argc, char const *argv[]) {
     buildNeighborhood(argv, 3, argc);
 
     int s = openSocket(argv[1]); //Descritor do Socket
+    puts("Socket aberto!");
     
     //Estruturas 
     Msg_generica msg_generica;
