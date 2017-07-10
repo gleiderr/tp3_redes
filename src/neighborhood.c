@@ -41,6 +41,7 @@ void buildNeighborhood(char const *argv[], int begin, int n) {
 }
 
 void dispatch(int s, Msg_query* query, struct sockaddr_in* except) {
+    puts("dispatch_in()");
     struct sockaddr_in sin_aux;
     Celula* aux = neighborhood;
 
@@ -58,10 +59,12 @@ void dispatch(int s, Msg_query* query, struct sockaddr_in* except) {
         if(send) {
             sin_aux.sin_port = n->port;
             sin_aux.sin_addr = n->sin_addr;
+            printf("sendto(%s:%d)\n", inet_ntoa(sin_aux.sin_addr), sin_aux.sin_port);
             if((sendto(s, query, sizeof(query), 0, (struct sockaddr*) &sin_aux, sizeof(struct sockaddr_in))) < 0)
                 die("error: sendto");
         }
     }
+    puts("dispatch_out()");
 }
 
 void destroyNeighborhood() {

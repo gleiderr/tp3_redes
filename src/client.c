@@ -20,7 +20,7 @@ int openClient(char const* addr, struct sockaddr_in* sin) {
 	timeout.tv_usec = 4;
 	
     /* Abrindo Socket */
-    if (sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP) < 0) {
+    if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         perror("error: socket");
         return 0;
     }
@@ -30,9 +30,11 @@ int openClient(char const* addr, struct sockaddr_in* sin) {
     for(i = 0; addr[i] != ':'; i++)
         host[i] = addr[i];
     host[i] = '\0';
-    char temPort[4+1];
-    for(; addr[i] != '\0'; i++)
-        temPort[i] = addr[i];
+
+    /*for(; addr[i] != '\0'; i++)
+        temPort[i] = addr[i];*/
+    //Garantido port igual a escrita no addr, independente do tamalho e já garantindo \0 ao final.
+    char* temPort = &addr[i+1]; 
     server_port = atoi(temPort); //Lendo e convertendo a porta do servidor
 
     printf("Servent IP:%s, PORT:%i\n", host, server_port);
@@ -41,7 +43,7 @@ int openClient(char const* addr, struct sockaddr_in* sin) {
     sin->sin_port = htons(server_port);
     sin->sin_family = AF_INET;
 
-    if (inet_aton(host , (struct in_addr *) &(sin->sin_addr.s_addr)) == 0) 
+    if (inet_aton(host , (struct in_addr *) &(sin->sin_addr)) == 0) 
     {
     	perror("error: inet_aton");
         return 0;
@@ -50,6 +52,7 @@ int openClient(char const* addr, struct sockaddr_in* sin) {
     /* Coloca o timer no */
     if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout,sizeof(timeout)) < 0) {
 	    perror("error: timeout");
+        return 0;
 	}
    
     return sock;
@@ -57,14 +60,14 @@ int openClient(char const* addr, struct sockaddr_in* sin) {
 
 void sendMSG(int sock, char* key, struct sockaddr_in* siServer) {
     Msg_clireq msgReq; // Mensagem que será enviada ao servent referencia quando uma chave for requisitada.
-    msgReq.type = CLIREQ;
-    memcpy(msgReq.chave, key, strlen(key));
+    msgReq.type = htons(CLIREQ);
+    memcpy(msgReq.chave, key, strlen(key) + 1); //+1 para o '\0'
     
-    if (sendto(sock, &msgReq, sizeof(Msg_clireq) , 0 , (struct sockaddr *) siServer, sizeof(siServer)) == -1)
+    if (sendto(sock, &msgReq, sizeof(Msg_clireq) , 0 , (struct sockaddr *) siServer, sizeof(struct sockaddr_in)) == -1)
     {
    	    perror("error: sendto");
         close(sock);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -76,15 +79,15 @@ void sendMSG(int sock, char* key, struct sockaddr_in* siServer) {
 int main(int argc, char const *argv[]) {
     Msg_response respMsg;
     struct sockaddr_in sout;
-    struct sockaddr_in sin;
-    int sock, sLen = sizeof(sin), sOutLen = sizeof(sout);
+    int sock;
+    socklen_t sOutLen = sizeof(sout);
     
     /* Abre conexão UDP com servent referencia. */
     if(!(sock = openClient(argv[1], &sout)))
-        exit(-1);
+        exit(EXIT_FAILURE);
     printf("Socket opened!\n");
 
-    printf("Esse é um programa simples de troca de chaves-valores em um Sistema ​Peer-to-peer.\n Digite o valor de uma chave, ou digite sair par finalizar a aplicação. \n");
+    printf("Esse é um programa simples de troca de chaves-valores em um Sistema ​Peer-to-peer.\n Digite o valor de uma chave, ou digite sair para finalizar a aplicação. \n");
     /* Rotina principal, recebe o valor*/
     int waitingForKey = 1, endClient = 0, ntimeouts = 0;
     char key[MAX_CHAVE];
@@ -93,13 +96,13 @@ int main(int argc, char const *argv[]) {
         if(waitingForKey)
         {
         	printf("Chave: ");
-        	if (fgets(key, sizeof key, stdin)) {
+        	if (fgets(key, sizeof(key), stdin)) {
                 key[strcspn(key, "\n")] = '\0';
                 if(strcmp(key, "sair") == 0)
                     endClient = 1;
                 waitingForKey = 0;         
             }
-        	else printf("Digite dentro do limite de 41 caractéres. \n");
+        	else printf("Digite dentro do limite de 41 caracteres. \n");
         }
         else {
             sendMSG(sock, key, &sout);
@@ -125,5 +128,5 @@ int main(int argc, char const *argv[]) {
     }
     
     close(sock);
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
