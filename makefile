@@ -1,7 +1,7 @@
 all: servent #client
 
 servent: src/servent.c obj/dictionary.o obj/neighborhood.o obj/pilha.o obj/util.o obj/msg.o
-	gcc -o servent src/servent.c obj/dictionary.o obj/neighborhood.o obj/pilha.o obj/util.o -Wall
+	gcc -o servent src/servent.c obj/dictionary.o obj/neighborhood.o obj/pilha.o obj/util.o obj/msg.o -Wall
 
 #client: src/client.c src/msg.h
 #	gcc -o client src/client.c -Wall

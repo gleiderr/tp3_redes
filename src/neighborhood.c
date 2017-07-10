@@ -40,16 +40,22 @@ void buildNeighborhood(char const *argv[], int begin, int n) {
     }
 }
 
-void dispatch(int s, Msg_query* query, struct sockaddr_in* sin) {
+void dispatch(int s, Msg_query* query, struct sockaddr_in* except) {
     struct sockaddr_in sin_aux;
     Celula* aux = neighborhood;
 
     bzero((char*) &sin_aux, sizeof(struct sockaddr_in));
     sin_aux.sin_family = AF_INET;
 
+    int send;
     while((aux = proxPilha(aux)) != NULL){
         Neighbor* n = objPilha(aux);
-        if(n->port != sin->sin_port && n->sin_addr.s_addr != sin->sin_addr.s_addr){
+        if(except == NULL) //Se não houver excessão de vizinho
+            send = 1;
+        else if(n->port != except->sin_port || n->sin_addr.s_addr != except->sin_addr.s_addr)
+            send = 1;
+
+        if(send) {
             sin_aux.sin_port = n->port;
             sin_aux.sin_addr = n->sin_addr;
             if((sendto(s, query, sizeof(query), 0, (struct sockaddr*) &sin_aux, sizeof(struct sockaddr_in))) < 0)

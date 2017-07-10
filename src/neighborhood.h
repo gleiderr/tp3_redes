@@ -9,8 +9,8 @@
 /* Constrói vizinhança a partir da lista de endereços [argv], iniciando no índice [begin], cujo [argv] contém [n] elementos. */
 void buildNeighborhood(char const *argv[], int begin, int n);
 
-/* Encaminha QUERY, para toda a [neighborhood], exceto para o vizinho de endereço [sin]. */
-void dispatch(int s, Msg_query* query, struct sockaddr_in* sin);
+/* Encaminha QUERY, para toda a [neighborhood], exceto para o vizinho de endereço [except]. */
+void dispatch(int s, Msg_query* query, struct sockaddr_in* except);
 
 /* Libera memória ocupada pela vizinhança */
 void destroyNeighborhood();
