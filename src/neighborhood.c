@@ -62,7 +62,7 @@ void destroyNeighborhood() {
     Celula* aux = neighborhood;
     //puts("destroyNeighborhood");
     while((aux = proxPilha(aux)) != NULL){
-        Neighbor* n = (Neighbor*) objPilha(aux);
+        //Neighbor* n = (Neighbor*) objPilha(aux);
         //printf("<%s:%d>\n", inet_ntoa(n->sin_addr), ntohs(n->port));
         free(objPilha(aux));
     }

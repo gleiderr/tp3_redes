@@ -72,7 +72,7 @@ int main(int argc, char const *argv[]) {
                 msg_query.ttl = htons(3);
                 msg_query.sin_addr = sin.sin_addr; //Não uso htons. À priori já chegou formatado
                 msg_query.port = sin.sin_port; //Não uso htons. À priori já chegou formatado
-                msg_query.seq = seq++;
+                msg_query.seq = htonl(seq++);
                 strcpy(msg_query.chave, msg_clireq->chave);
 
                 insertQueryMemory(&msg_query);

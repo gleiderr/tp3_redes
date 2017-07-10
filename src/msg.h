@@ -32,10 +32,16 @@ typedef struct {
 
 #define Msg_generica Msg_query
 
-/* Verifica se determinada Msg_query está na memória */
-int inQueryMemory(Msg_query* msg);
+/* Aloca memória para armazenar queries. */
+void buildQueryMemory();
 
 /* Insere determinada query na memória */
 void insertQueryMemory(Msg_query* msg);
+
+/* Verifica se determinada Msg_query está na memória */
+int inQueryMemory(Msg_query* msg);
+
+/* Libera memória utilizada para armazenar queries. */
+void destroyQueryMemory();
 
 #endif
