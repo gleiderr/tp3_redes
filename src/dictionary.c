@@ -70,6 +70,16 @@ Celula* inDictionary(char const* chave) {
     return NULL;
 }
 
+char* valorInDictionary(char const* chave) {
+    Celula *aux;
+    if((aux = inDictionary(chave)) != NULL) {
+        Par* par = (Par*) objPilha(aux);
+        return par->valor;
+    } else {
+        return NULL;
+    }
+}
+
 void destroyDictionary() {
     Celula* aux = dicionario;
     //puts("destroyDictionary");

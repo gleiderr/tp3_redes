@@ -17,7 +17,7 @@
 #define TIMEOUT_SEC 4
 #define TIMEOUT_uSEC 0
 
-int openSocket(char* porto) {
+int openSocket(const char* porto) {
     int s; //Descritor do Socket
     struct sockaddr_in sin;
 
@@ -43,8 +43,31 @@ int openSocket(char* porto) {
     return s;
 }
 
+/* Encaminha mensagem de RESPONSE ao client que fez a requisição, se valor for encontrado no dicionário. */
+void clientResponse(int s, Msg_query* query) {
+    char* valor;
+    if((valor = valorInDictionary(query->chave)) != NULL) {
+        //Responder diretamente ao client
+
+        struct sockaddr_in sin;
+        bzero((char*) &sin, sizeof(struct sockaddr_in));
+        sin.sin_family = AF_INET;
+        sin.sin_addr = query->sin_addr;
+        sin.sin_port = query->port;
+        
+        Msg_response response;
+        response.type = RESPONSE;
+        
+        strcpy(response.chave_valor, query->chave);
+        strcat(response.chave_valor, "\t");
+        strcat(response.chave_valor, valor);
+        
+        if((sendto(s, &response, sizeof(response), 0, (struct sockaddr*) &sin, sizeof(sin))) < 0)
+            die("error: in clientResponse(): sendto");
+    }
+}
+
 int main(int argc, char const *argv[]) {
-    int i;
     uint32_t seq = 0;
     struct sockaddr_in sin;
     socklen_t sin_len = 0;
@@ -61,7 +84,7 @@ int main(int argc, char const *argv[]) {
 
     while(1) {
 
-        if (recvfrom(s, &msg_generica, sizeof(msg_generica), 0, &sin, &sin_len) < 0)
+        if (recvfrom(s, &msg_generica, sizeof(msg_generica), 0, (struct sockaddr*) &sin, &sin_len) < 0)
             die("error: recvfrom");
 
         switch(ntohs(msg_generica.type)) {
@@ -72,34 +95,29 @@ int main(int argc, char const *argv[]) {
                 msg_query.ttl = htons(3);
                 msg_query.sin_addr = sin.sin_addr; //Não uso htons. À priori já chegou formatado
                 msg_query.port = sin.sin_port; //Não uso htons. À priori já chegou formatado
-                msg_query.seq = seq++;
+                msg_query.seq = htonl(seq++);
                 strcpy(msg_query.chave, msg_clireq->chave);
 
                 insertQueryMemory(&msg_query);
 
-                //Encaminhar para vizinhança
-                dispatch(&msg_query, NULL);
+                dispatch(s, &msg_query, NULL); //Encaminhar para vizinhança
 
-                if(inDictionary(msg_query.chave)) {
-                    //Responder diretamente ao client
-                }
+                clientResponse(s, &msg_query);
                 break;
             case QUERY:
                 if(!inQueryMemory(&msg_generica)){
                     insertQueryMemory(&msg_generica);
 
-                    if(inDictionary(msg_generica.chave)) {
-                        //Responder diretamente ao client
-                    }
+                    clientResponse(s, &msg_generica);
 
                     //Decrementando no byte-order do host
                     msg_generica.ttl = ntohs(msg_generica.ttl) - 1; 
-                    if(msg_query.ttl > 0) {
+                    if(msg_generica.ttl > 0) {
                         //Retornando para o byte-order da network
-                        msg_query.ttl = htons(msg_query.ttl);
+                        msg_generica.ttl = htons(msg_generica.ttl);
                         
                         //Encaminhar para vizinhança exceto para nó do qual a mensagem foi recebida
-                        dispatch(&msg_query, &sin);
+                        dispatch(s, &msg_generica, &sin);
                     }
                 }
                 break;
