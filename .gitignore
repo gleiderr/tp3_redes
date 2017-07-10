@@ -1,4 +1,5 @@
 .gitignore
 *sublime*
 obj/
+src/client
 exemplo.c
