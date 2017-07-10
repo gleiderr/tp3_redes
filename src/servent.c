@@ -7,8 +7,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include <errno.h>
 
+#include "util.h"
 #include "msg.h"
 #include "dictionary.h"
 #include "neighborhood.h"
@@ -16,11 +16,6 @@
 #define MAX_BUFF 512
 #define TIMEOUT_SEC 4
 #define TIMEOUT_uSEC 0
-
-void die(char *s) {
-    perror(s);
-    exit(EXIT_FAILURE);
-}
 
 int openSocket(char* porto) {
     int s; //Descritor do Socket

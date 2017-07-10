@@ -1,11 +1,14 @@
+#include <stdlib.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h> //inet_network()
 #include <arpa/inet.h> //inet_network()
+#include <strings.h> //bzero()
 
 #include "neighborhood.h"
-#include "msg.h"
 #include "pilha.h"
+#include "util.h"
 
 typedef struct {
     struct in_addr sin_addr; //Utilizar inet_network() atribuindo o retorno para sin_addr.s_addr
@@ -13,11 +16,6 @@ typedef struct {
 } Neighbor;
 
 Pilha* neighborhood;
-
-void die(char *s) {
-    perror(s);
-    exit(EXIT_FAILURE);
-}
 
 void buildNeighborhood(char const *argv[], int begin, int n) {
     int i, j;
@@ -35,7 +33,7 @@ void buildNeighborhood(char const *argv[], int begin, int n) {
 
         Neighbor* n = (Neighbor*) malloc(sizeof(Neighbor));
         n->port = htons(atoi(s_port));
-        if((n->sin_addr.s_addr = inet_network(s_ip)) < 0)
+        if(inet_aton(s_ip, &n->sin_addr) < 0)
             die("error: inet_network");
 
         inserePilha(neighborhood, n);
@@ -54,7 +52,7 @@ void dispatch(int s, Msg_query* query, struct sockaddr_in* sin) {
         if(n->port != sin->sin_port && n->sin_addr.s_addr != sin->sin_addr.s_addr){
             sin_aux.sin_port = n->port;
             sin_aux.sin_addr = n->sin_addr;
-            if((sendto(s, query, sizeof(query), 0, &sin_aux, sizeof(struct sockaddr_in))) < 0)
+            if((sendto(s, query, sizeof(query), 0, (struct sockaddr*) &sin_aux, sizeof(struct sockaddr_in))) < 0)
                 die("error: sendto");
         }
     }
@@ -62,10 +60,10 @@ void dispatch(int s, Msg_query* query, struct sockaddr_in* sin) {
 
 void destroyNeighborhood() {
     Celula* aux = neighborhood;
-    puts("destroyNeighborhood");
+    //puts("destroyNeighborhood");
     while((aux = proxPilha(aux)) != NULL){
         Neighbor* n = (Neighbor*) objPilha(aux);
-        printf("<%s:%d>\n", inet_ntoa(n->sin_addr), n->port);
+        //printf("<%s:%d>\n", inet_ntoa(n->sin_addr), ntohs(n->port));
         free(objPilha(aux));
     }
 
