@@ -74,7 +74,7 @@ int main(int argc, char const *argv[]) {
 
     buildDictionary(argv[2]);
     buildNeighborhood(argv, 3, argc);
-    void buildQueryMemory();
+    buildQueryMemory();
 
     int s = openSocket(argv[1]); //Descritor do Socket
     puts("Socket aberto!");

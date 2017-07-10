@@ -25,7 +25,6 @@ void insertQueryMemory(Msg_query* msg) {
     m->seq = msg->seq;
     strcpy(m->chave, msg->chave);
 
-    puts(m->chave);
     fprintf(stderr, "insertQueryMemory(m->type(%d), m->ttl(%d), m->sin_addr(%s), m->port(%d), m->seq(%d), m->chave(%s))\n", ntohs(m->type), ntohs(m->ttl), inet_ntoa(m->sin_addr), ntohs(m->port), ntohl(m->seq), m->chave);
 
     inserePilha(queryMemory, m);

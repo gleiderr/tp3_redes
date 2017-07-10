@@ -60,7 +60,7 @@ void dispatch(int s, Msg_query* query, struct sockaddr_in* except) {
             sin_aux.sin_port = n->port;
             sin_aux.sin_addr = n->sin_addr;
             printf("sendto(%s:%d)\n", inet_ntoa(sin_aux.sin_addr), sin_aux.sin_port);
-            if((sendto(s, query, sizeof(query), 0, (struct sockaddr*) &sin_aux, sizeof(struct sockaddr_in))) < 0)
+            if((sendto(s, query, sizeof(query), 0, (struct sockaddr*) &sin_aux, sizeof(sin_aux))) < 0)
                 die("error: sendto");
         }
     }
