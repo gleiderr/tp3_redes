@@ -7,8 +7,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include <errno.h>
 
+#include "util.h"
 #include "msg.h"
 #include "dictionary.h"
 #include "neighborhood.h"
@@ -16,11 +16,6 @@
 #define MAX_BUFF 512
 #define TIMEOUT_SEC 4
 #define TIMEOUT_uSEC 0
-
-void die(char *s) {
-    perror(s);
-    exit(EXIT_FAILURE);
-}
 
 int openSocket(char* porto) {
     int s; //Descritor do Socket
@@ -53,10 +48,9 @@ int main(int argc, char const *argv[]) {
     uint32_t seq = 0;
     struct sockaddr_in sin;
     socklen_t sin_len = 0;
-    Neighborhood neighborhood;
 
     buildDictionary(argv[2]);
-    buildNeighborhood(argv, 3, argc, &neighborhood);
+    buildNeighborhood(argv, 3, argc);
 
     int s = openSocket(argv[1]); //Descritor do Socket
     
@@ -84,7 +78,7 @@ int main(int argc, char const *argv[]) {
                 insertQueryMemory(&msg_query);
 
                 //Encaminhar para vizinhança
-                dispatch(&msg_query, &neighborhood, NULL);
+                dispatch(&msg_query, NULL);
 
                 if(inDictionary(msg_query.chave)) {
                     //Responder diretamente ao client
@@ -105,7 +99,7 @@ int main(int argc, char const *argv[]) {
                         msg_query.ttl = htons(msg_query.ttl);
                         
                         //Encaminhar para vizinhança exceto para nó do qual a mensagem foi recebida
-                        dispatch(&msg_query, &neighborhood, &sin);
+                        dispatch(&msg_query, &sin);
                     }
                 }
                 break;
@@ -114,6 +108,7 @@ int main(int argc, char const *argv[]) {
         }
     }
 
+    destroyNeighborhood();
     destroyDictionary();
     exit(EXIT_SUCCESS);
 }
