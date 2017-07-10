@@ -5,22 +5,20 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <errno.h>
 
 #include "msg.h"
 
-int openClient(char const* addr) {
+int openClient(char const* addr, struct sockaddr_in* sin) {
     int i, sock;
     int server_port;
-    struct sockaddr_in sin;
-	
+
 	struct timeval timeout;
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 4;
 	
-    bzero((char*) &sin, sizeof(sin));
-    
     /* Abrindo Socket */
     if (sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP) < 0) {
         perror("error: socket");
@@ -39,11 +37,11 @@ int openClient(char const* addr) {
 
     printf("Servent IP:%s, PORT:%i\n", host, server_port);
 
-    memset((char *) &sin, 0, sizeof(sin));
-    sin.sin_port = htons(server_port);
-    sin.sin_family = AF_INET;
+    bzero((char*) sin, sizeof(&sin));
+    sin->sin_port = htons(server_port);
+    sin->sin_family = AF_INET;
 
-    if (inet_aton(host , sin.sin_addr) == 0) 
+    if (inet_aton(host , (struct in_addr *) &(sin->sin_addr.s_addr)) == 0) 
     {
     	perror("error: inet_aton");
         return 0;
@@ -57,15 +55,15 @@ int openClient(char const* addr) {
     return sock;
 }
 
-void sendMSG(int s, char* key, struct sockaddr_in* si_other, int sLen) {
+void sendMSG(int sock, char* key, struct sockaddr_in* siServer) {
     Msg_clireq msgReq; // Mensagem que será enviada ao servent referencia quando uma chave for requisitada.
     msgReq.type = CLIREQ;
     memcpy(msgReq.chave, key, strlen(key));
     
-    if (sendto(s, &msgReq, sizeof(Msg_clireq) , 0 , (struct sockaddr *) si_other, sLen) == -1)
+    if (sendto(sock, &msgReq, sizeof(Msg_clireq) , 0 , (struct sockaddr *) siServer, sizeof(siServer)) == -1)
     {
-   	    perror("error: sendMSG");
-        close(s);
+   	    perror("error: sendto");
+        close(sock);
         exit(1);
     }
 }
@@ -76,29 +74,56 @@ void sendMSG(int s, char* key, struct sockaddr_in* si_other, int sLen) {
  * Caso a resposta chegue 
  */
 int main(int argc, char const *argv[]) {
-    
+    Msg_response respMsg;
+    struct sockaddr_in sout;
     struct sockaddr_in sin;
-    int sock, sLen = sizeof(sin);
+    int sock, sLen = sizeof(sin), sOutLen = sizeof(sout);
     
     /* Abre conexão UDP com servent referencia. */
-    if(!(sock = openClient(argv[1], &sin)))
+    if(!(sock = openClient(argv[1], &sout)))
         exit(-1);
     printf("Socket opened!\n");
 
-    printf("Esse é um programa simples de troca de chaves-valores em um Sistema ​Peer-to-peer.\n
-    		Digite o valor de uma chave, ou digite sair par finalizar a aplicação. \n", );
+    printf("Esse é um programa simples de troca de chaves-valores em um Sistema ​Peer-to-peer.\n Digite o valor de uma chave, ou digite sair par finalizar a aplicação. \n");
     /* Rotina principal, recebe o valor*/
-    int waitingForKey = 1, endClient = 0;
+    int waitingForKey = 1, endClient = 0, ntimeouts = 0;
     char key[MAX_CHAVE];
-    while(!endClient) {
-        if(waitingForKey){
+    while(!endClient) 
+    {
+        if(waitingForKey)
+        {
         	printf("Chave: ");
-        	gets(key);
-
-        	
+        	if (fgets(key, sizeof key, stdin)) {
+                key[strcspn(key, "\n")] = '\0';
+                if(strcmp(key, "sair") == 0)
+                    endClient = 1;
+                waitingForKey = 0;         
+            }
+        	else printf("Digite dentro do limite de 41 caractéres. \n");
         }
+        else {
+            sendMSG(sock, key, &sout);
+        	if(recvfrom(sock, &respMsg ,sizeof(respMsg), 0, (struct sockaddr *) &sout, &sOutLen) < 0)
+            {
+    			//timeout reached
+    			printf("Timout reached. Resending segment %d\n", ntimeouts);
+    			ntimeouts++;
+			}
+            else 
+            {
+                if(ntohs(respMsg.type) == RESPONSE)
+                {
+                    printf("%s\n", respMsg.chave_valor);
+                    ntimeouts = 0;
+                    waitingForKey = 1;
+                }
+                else 
+                    printf("Resposta com tipo errado: %d\n", ntohs(respMsg.type));
+            }
+        }
+
     }
     
-    close(s);
+    close(sock);
     exit(0);
 }
