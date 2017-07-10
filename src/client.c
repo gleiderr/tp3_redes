@@ -61,7 +61,7 @@ int openClient(char const* addr, struct sockaddr_in* sin) {
 void sendMSG(int sock, char* key, struct sockaddr_in* siServer) {
     Msg_clireq msgReq; // Mensagem que será enviada ao servent referencia quando uma chave for requisitada.
     msgReq.type = htons(CLIREQ);
-    memcpy(msgReq.chave, key, strlen(key));
+    memcpy(msgReq.chave, key, strlen(key) + 1); //+1 para o '\0'
     
     if (sendto(sock, &msgReq, sizeof(Msg_clireq) , 0 , (struct sockaddr *) siServer, sizeof(struct sockaddr_in)) == -1)
     {

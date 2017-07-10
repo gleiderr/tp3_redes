@@ -74,6 +74,7 @@ int main(int argc, char const *argv[]) {
 
     buildDictionary(argv[2]);
     buildNeighborhood(argv, 3, argc);
+    void buildQueryMemory();
 
     int s = openSocket(argv[1]); //Descritor do Socket
     puts("Socket aberto!");
@@ -98,6 +99,7 @@ int main(int argc, char const *argv[]) {
                 msg_query.port = sin.sin_port; //Não uso htons. À priori já chegou formatado
                 msg_query.seq = htonl(seq++);
                 strcpy(msg_query.chave, msg_clireq->chave);
+                fprintf(stderr, "case CLIREQ: %s\n", msg_query.chave);
 
                 insertQueryMemory(&msg_query);
 
@@ -106,6 +108,7 @@ int main(int argc, char const *argv[]) {
                 clientResponse(s, &msg_query);
                 break;
             case QUERY:
+                puts("case QUERY:");
                 if(!inQueryMemory(&msg_generica)){
                     insertQueryMemory(&msg_generica);
 
@@ -129,5 +132,6 @@ int main(int argc, char const *argv[]) {
 
     destroyNeighborhood();
     destroyDictionary();
+    void destroyQueryMemory();
     exit(EXIT_SUCCESS);
 }

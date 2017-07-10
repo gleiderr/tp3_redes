@@ -12,7 +12,11 @@ void buildQueryMemory() {
 }
 
 /* Insere determinada query na memória */
+#include <netinet/in.h> //somente para testes
+#include <arpa/inet.h> //somente para testes
+#include <stdio.h> //somente para teste
 void insertQueryMemory(Msg_query* msg) {
+    puts("insertQueryMemory_in()");
     Msg_query* m = (Msg_query*) malloc(sizeof(Msg_query));
     m->type = msg->type; //Sempre igual a QUERY
     m->ttl = msg->ttl;
@@ -21,7 +25,11 @@ void insertQueryMemory(Msg_query* msg) {
     m->seq = msg->seq;
     strcpy(m->chave, msg->chave);
 
+    puts(m->chave);
+    fprintf(stderr, "insertQueryMemory(m->type(%d), m->ttl(%d), m->sin_addr(%s), m->port(%d), m->seq(%d), m->chave(%s))\n", ntohs(m->type), ntohs(m->ttl), inet_ntoa(m->sin_addr), ntohs(m->port), ntohl(m->seq), m->chave);
+
     inserePilha(queryMemory, m);
+    fprintf(stderr, "insertQueryMemory_out()");
 }
 
 /* Verifica se determinada Msg_query está na memória 
