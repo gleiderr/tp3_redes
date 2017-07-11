@@ -123,6 +123,12 @@ int main(int argc, char const *argv[]) {
                 else 
                     printf("Resposta com tipo errado: %d\n", ntohs(respMsg.type));
             }
+            if(ntimeouts == 2)
+            {
+                printf("Essa chave pode estar indisponivel, pois não obteve nenhuma resposta em duas tentativas. \n");
+                ntimeouts = 0;
+                waitingForKey = 1;
+            }
         }
 
     }
