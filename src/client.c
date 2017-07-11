@@ -16,8 +16,8 @@ int openClient(char const* addr, struct sockaddr_in* sin) {
     int server_port;
 
 	struct timeval timeout;
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 4;
+	timeout.tv_sec = 4;
+	timeout.tv_usec = 0;
 	
     /* Abrindo Socket */
     if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
