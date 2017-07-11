@@ -58,11 +58,11 @@ void buildDictionary(char const* fname) {
     }
 
     //Somente para teste
-    Celula* aux = dicionario;
+    /*Celula* aux = dicionario;
     while((aux = proxPilha(aux)) != NULL) {
         Par* par = (Par*) objPilha(aux);
         printf("<%s><%s>\n", par->chave, par->valor);
-    }
+    }*/
 
     fclose(f);
 }

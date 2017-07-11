@@ -37,7 +37,7 @@ int openClient(char const* addr, struct sockaddr_in* sin) {
     char* temPort = &addr[i+1]; 
     server_port = atoi(temPort); //Lendo e convertendo a porta do servidor
 
-    printf("Servent IP:%s, PORT:%i\n", host, server_port);
+    //printf("Servent IP:%s, PORT:%i\n", host, server_port);
 
     bzero((char*) sin, sizeof(&sin));
     sin->sin_port = htons(server_port);
@@ -85,7 +85,7 @@ int main(int argc, char const *argv[]) {
     /* Abre conexão UDP com servent referencia. */
     if(!(sock = openClient(argv[1], &sout)))
         exit(EXIT_FAILURE);
-    printf("Socket opened!\n");
+    //printf("Socket opened!\n");
 
     printf("Esse é um programa simples de troca de chaves-valores em um Sistema ​Peer-to-peer.\n Digite o valor de uma chave, ou digite sair para finalizar a aplicação. \n");
     /* Rotina principal, recebe o valor*/

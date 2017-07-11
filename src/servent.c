@@ -79,7 +79,7 @@ int main(int argc, char const *argv[]) {
     buildQueryMemory();
 
     int s = openSocket(argv[1]); //Descritor do Socket
-    puts("Socket aberto!");
+    //puts("Socket aberto!");
     
     //Estruturas 
     Msg_generica msg_generica;
@@ -102,7 +102,7 @@ int main(int argc, char const *argv[]) {
                 msg_query.port = sin->sin_port; //Não uso htons. À priori já chegou formatado
                 msg_query.seq = htonl(seq++);
                 strcpy(msg_query.chave, msg_clireq->chave);
-                fprintf(stderr, "case CLIREQ: %s\n", msg_query.chave);
+                //fprintf(stderr, "case CLIREQ: %s\n", msg_query.chave);
 
                 insertQueryMemory(&msg_query);
 
@@ -111,7 +111,7 @@ int main(int argc, char const *argv[]) {
                 clientResponse(s, &msg_query);
                 break;
             case QUERY:
-                puts("case QUERY:");
+                //puts("case QUERY:");
                 if(!inQueryMemory(&msg_generica)){
                     insertQueryMemory(&msg_generica);
 
