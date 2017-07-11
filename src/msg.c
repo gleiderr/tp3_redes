@@ -28,7 +28,7 @@ void insertQueryMemory(Msg_query* msg) {
     fprintf(stderr, "insertQueryMemory(m->type(%d), m->ttl(%d), m->sin_addr(%s), m->port(%d), m->seq(%d), m->chave(%s))\n", ntohs(m->type), ntohs(m->ttl), inet_ntoa(m->sin_addr), ntohs(m->port), ntohl(m->seq), m->chave);
 
     inserePilha(queryMemory, m);
-    fprintf(stderr, "insertQueryMemory_out()");
+    fprintf(stderr, "insertQueryMemory_out()\n");
 }
 
 /* Verifica se determinada Msg_query está na memória 

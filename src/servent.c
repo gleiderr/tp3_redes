@@ -52,24 +52,26 @@ void clientResponse(int s, Msg_query* query) {
         struct sockaddr_in sin;
         bzero((char*) &sin, sizeof(struct sockaddr_in));
         sin.sin_family = AF_INET;
-        sin.sin_addr = query->sin_addr;
+        sin.sin_addr.s_addr = query->sin_addr.s_addr;
         sin.sin_port = query->port;
         
         Msg_response response;
-        response.type = RESPONSE;
+        response.type = htons(RESPONSE);
         
         strcpy(response.chave_valor, query->chave);
         strcat(response.chave_valor, "\t");
         strcat(response.chave_valor, valor);
         
-        if((sendto(s, &response, sizeof(response), 0, (struct sockaddr*) &sin, sizeof(sin))) < 0)
+        if((sendto(s, &response, sizeof(Msg_response), 0, (struct sockaddr*) &sin, 
+            sizeof(struct sockaddr_in))) < 0)
             die("error: in clientResponse(): sendto");
     }
 }
 
 int main(int argc, char const *argv[]) {
     uint32_t seq = 0;
-    struct sockaddr_in sin;
+    struct sockaddr_storage sst;
+    struct sockaddr_in* sin;
     socklen_t sin_len = 0;
 
     buildDictionary(argv[2]);
@@ -86,8 +88,9 @@ int main(int argc, char const *argv[]) {
 
     while(1) {
 
-        if (recvfrom(s, &msg_generica, sizeof(msg_generica), 0, (struct sockaddr*) &sin, &sin_len) < 0)
+        if (recvfrom(s, &msg_generica, sizeof(msg_generica), 0, (struct sockaddr*) &sst, &sin_len) < 0)
             die("error: recvfrom");
+        sin = (struct sockaddr_in*) &sst;
 
         switch(ntohs(msg_generica.type)) {
             case CLIREQ:
@@ -95,8 +98,8 @@ int main(int argc, char const *argv[]) {
 
                 msg_query.type = htons(QUERY);
                 msg_query.ttl = htons(3);
-                msg_query.sin_addr = sin.sin_addr; //Não uso htons. À priori já chegou formatado
-                msg_query.port = sin.sin_port; //Não uso htons. À priori já chegou formatado
+                msg_query.sin_addr.s_addr = sin->sin_addr.s_addr; //Não uso htons. À priori já chegou formatado
+                msg_query.port = sin->sin_port; //Não uso htons. À priori já chegou formatado
                 msg_query.seq = htonl(seq++);
                 strcpy(msg_query.chave, msg_clireq->chave);
                 fprintf(stderr, "case CLIREQ: %s\n", msg_query.chave);
@@ -121,7 +124,7 @@ int main(int argc, char const *argv[]) {
                         msg_generica.ttl = htons(msg_generica.ttl);
                         
                         //Encaminhar para vizinhança exceto para nó do qual a mensagem foi recebida
-                        dispatch(s, &msg_generica, &sin);
+                        dispatch(s, &msg_generica, sin);
                     }
                 }
                 break;
